@@ -7,11 +7,25 @@ class Author(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     name= db.Column(db.String, unique=True, nullable=False)
-    phone_number = db.Column(db.String)
+    phone_number = db.Column(db.String(10))
     created_at = db.Column(db.DateTime, server_default=db.func.now())
     updated_at = db.Column(db.DateTime, onupdate=db.func.now())
 
-    # Add validators 
+    # Add validators
+
+    @validates('name')
+    def validate_name(self,key,name):
+        if name :
+            return name
+        else:
+            raise ValueError('Author must have a name')
+
+    @validates('phone_number')
+    def validate_phone_number(self,key,phone_number):
+        if phone_number.isdigit() and len(phone_number) == 10:
+            return phone_number
+        else:
+            raise ValueError("Phone number must be of 10 digits")
 
     def __repr__(self):
         return f'Author(id={self.id}, name={self.name})'
@@ -28,7 +42,31 @@ class Post(db.Model):
     updated_at = db.Column(db.DateTime, onupdate=db.func.now())
 
     # Add validators  
+    @validates('content')
+    def validate_content(self, key, content):
+        if len(content) < 250:
+            raise ValueError('Post content must be at least 250 characters long.')
+        return content
+    
+    @validates('summary')
+    def validate_summary(self,key,summary):
+        if summary and len(summary)> 250:
+            raise ValueError('Summary is a maximum of 250 characters.')
+        return summary
+    
+    @validates('category')
+    def validate_category(self,key,category):
+        if category is ['Fiction', 'Non-Fiction']:
+            return category
+        else:
+            raise ValueError('Category must either be Fiction or Non-Fiction')
 
+    @validates('title')
+    def validate_title(self, key, title):
+        clickbait_phrases = ["Won't Believe", "Secret", "Top", "Guess"]
+        if not any(phrase in title for phrase in clickbait_phrases):
+            raise ValueError('Post title must contain one of the following: "Won\'t Believe", "Secret", "Top", "Guess"')
+        return title
 
     def __repr__(self):
         return f'Post(id={self.id}, title={self.title} content={self.content}, summary={self.summary})'
